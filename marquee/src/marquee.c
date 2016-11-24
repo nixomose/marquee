@@ -360,12 +360,14 @@ char translate(char c)
       }
   }
 
-void update_marquee(char *patterns, int sz)
+void update_marquee(char *orig, char *patterns, int sz)
   {
     /* take the bit patterns and display the first 8,
      * then wait a bit and print the next 8 starting at position 2
      * taking care to deal with 8 char strings, and wrapping around. */
 
+    char dbuf[9];
+    dbuf[8] = '\0';
     while (true)
       {
         d("start update marquee loop");
@@ -377,6 +379,8 @@ void update_marquee(char *patterns, int sz)
               readpos -= sz;
             char pic = patterns[readpos];
             display[lp] = pic;
+            dbuf[lp] = orig[readpos];
+            printf ("%s\n", dbuf);
           }
 
         startpos++;
@@ -393,7 +397,7 @@ int main(int num, char *opts[])
   {
 
     // get the string to print
-    if (num < 1)
+    if (num < 2)
       {
         printf("marquee <string>\n");
         printf("pass the string to print as a parameter.\n");
@@ -403,11 +407,12 @@ int main(int num, char *opts[])
     int lp;
     char *buf = malloc(1);
     *buf = '\0';
-    for (lp = 0; lp < num; lp++)
+    for (lp = 1; lp < num; lp++)
       {
         int newlen = strlen(buf) + strlen(opts[lp]) + 2; // space + nt
         buf = realloc(buf, newlen);
-        strcat(buf, " ");
+        if (lp > 1)
+          strcat(buf, " ");
         strcat(buf, opts[lp]);
       }
 
@@ -419,8 +424,8 @@ int main(int num, char *opts[])
       }
 
     // add the end of string delim "---"
-    buf = realloc(buf, strlen(buf) + 5);
-    strcat(buf, "--- ");
+    buf = realloc(buf, strlen(buf) + 6);
+    strcat(buf, " --- ");
 
     d("displaying string:");d(buf);
     // now translate the string into a series of bit patterns
@@ -439,7 +444,7 @@ int main(int num, char *opts[])
     pthread_t t1;
     pthread_create(&t1, NULL, (void *) &display_thread, NULL);
     d("update marquee");
-    update_marquee(patterns, sz);
+    update_marquee(buf, patterns, sz);
     // never gets here
     pthread_join(t1, NULL);
 
