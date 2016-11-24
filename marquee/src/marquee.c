@@ -36,15 +36,25 @@
 
 int anode[] =
   {
-  b10000000, // digit position 1
-      b01000000, // digit position 2
-      b00100000, // digit position 3
-      b00010000, // digit position 4
-      b00001000, // digit position 5
-      b00000100, // digit position 6
-      b00000010, // digit position 7
-      b00000001  // digit position 8
-    };
+    b10000000, // digit position 1
+    b01000000, // digit position 2
+    b00100000, // digit position 3
+    b00010000, // digit position 4
+    b00001000, // digit position 5
+    b00000100, // digit position 6
+    b00000010, // digit position 7
+    b00000001  // digit position 8
+  };
+
+/* PGFEDCBA  p is the dot
+ *
+ *    A
+ *   F B
+ *    G
+ *   E C
+ *    D   p
+ *
+ */
 
 int LATCH = 4; // RCK of 8x7segment module pin 16
 
@@ -128,7 +138,7 @@ void *display_thread(void *opt)
           {
             displaypattern(7 - lp, display[lp]);
             latch();
-            delayMicroseconds(1000000); // 1000000 is one second
+            delayMicroseconds(100); // 1000000 is one second
           }
       }
     return NULL;
@@ -157,6 +167,16 @@ char led(int p, int a, int b, int c, int d, int e, int f, int g)
 
 char translate(char c)
   {
+    /* PGFEDCBA  p is the dot
+     *
+     *    A
+     *   F B
+     *    G
+     *   E C
+     *    D   p
+     *
+     */
+
     switch (c)
       {
       case 'A':
@@ -380,8 +400,8 @@ void update_marquee(char *orig, char *patterns, int sz)
             char pic = patterns[readpos];
             display[lp] = pic;
             dbuf[lp] = orig[readpos];
-            printf ("%s\n", dbuf);
           }
+        printf ("%s\n", dbuf);
 
         startpos++;
         if (startpos >= sz)
