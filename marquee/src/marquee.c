@@ -144,7 +144,7 @@ void *display_thread(void *opt)
     return NULL;
   }
 
-char led(int p, int a, int b, int c, int d, int e, int f, int g)
+void led(int p, int a, int b, int c, int d, int e, int f, int g, char *patterns, int *patternsize)
   {
     a = 1 - a;
     b = 1 - b;
@@ -163,10 +163,11 @@ char led(int p, int a, int b, int c, int d, int e, int f, int g)
     out |= (f << 5);
     out |= (g << 6);
     out |= (p << 7);
-    return out;
+    patterns[*patternsize] = out;
+    (*patternsize)++;
   }
 
-char translate(char c)
+void translate(char c, char *patterns, int *patternsize)
   {
     /* PGFEDCBA  p is the dot
      *
@@ -181,205 +182,209 @@ char translate(char c)
     switch (c)
       {
       case 'A':
-        return led(0, 1, 1, 1, 0, 1, 1, 1);
+        return led(0, 1, 1, 1, 0, 1, 1, 1, patterns, patternsize);
 
       case 'B':
-        return led(0, 0, 0, 1, 1, 1, 1, 1);
+        return led(0, 0, 0, 1, 1, 1, 1, 1, patterns, patternsize);
 
       case 'C':
-        return led(0, 1, 0, 0, 1, 1, 1, 0);
+        return led(0, 1, 0, 0, 1, 1, 1, 0, patterns, patternsize);
 
       case 'D':
-        return led(0, 0, 1, 1, 1, 1, 0, 1);
+        return led(0, 0, 1, 1, 1, 1, 0, 1, patterns, patternsize);
 
       case 'E':
-        return led(0, 1, 0, 0, 1, 1, 1, 1);
+        return led(0, 1, 0, 0, 1, 1, 1, 1, patterns, patternsize);
 
       case 'F':
-        return led(0, 1, 0, 0, 0, 1, 1, 1);
+        return led(0, 1, 0, 0, 0, 1, 1, 1, patterns, patternsize);
 
       case 'G':
-        return led(0, 1, 1, 1, 1, 0, 1, 1);
+        return led(0, 1, 1, 1, 1, 0, 1, 1, patterns, patternsize);
 
       case 'H':
-        return led(0, 0, 1, 1, 0, 1, 1, 1);
+        return led(0, 0, 1, 1, 0, 1, 1, 1, patterns, patternsize);
 
       case 'I':
-        return led(0, 0, 0, 0, 0, 1, 1, 0);
+        return led(0, 0, 0, 0, 0, 1, 1, 0, patterns, patternsize);
 
       case 'J':
-        return led(0, 0, 1, 1, 1, 1, 0, 0);
+        return led(0, 0, 1, 1, 1, 1, 0, 0, patterns, patternsize);
 
       case 'K':
-        return led(0, 0, 1, 1, 0, 1, 1, 1);
+        return led(0, 0, 1, 1, 0, 1, 1, 1, patterns, patternsize);
 
       case 'L':
-        return led(0, 0, 0, 0, 1, 1, 1, 0);
+        return led(0, 0, 0, 0, 1, 1, 1, 0, patterns, patternsize);
 
       case 'M':
-        return led(0, 1, 0, 1, 0, 1, 0, 0);
+               led(0, 1, 1, 0, 0, 1, 1, 0, patterns, patternsize);
+        return led(0, 0, 0, 0, 0, 1, 1, 0, patterns, patternsize);
 
       case 'N':
-        return led(0, 0, 0, 1, 0, 1, 0, 1);
+        return led(0, 0, 0, 1, 0, 1, 0, 1, patterns, patternsize);
 
       case 'O':
-        return led(0, 1, 1, 1, 1, 1, 1, 0);
+        return led(0, 1, 1, 1, 1, 1, 1, 0, patterns, patternsize);
 
       case 'P':
-        return led(0, 1, 1, 0, 0, 1, 1, 1);
+        return led(0, 1, 1, 0, 0, 1, 1, 1, patterns, patternsize);
 
       case 'Q':
-        return led(0, 1, 1, 1, 0, 0, 1, 1);
+        return led(0, 1, 1, 1, 0, 0, 1, 1, patterns, patternsize);
 
       case 'R':
-        return led(0, 0, 0, 0, 0, 1, 0, 1);
+        return led(0, 0, 0, 0, 0, 1, 0, 1, patterns, patternsize);
 
       case 'S':
-        return led(0, 1, 0, 1, 1, 0, 1, 1);
+        return led(0, 1, 0, 1, 1, 0, 1, 1, patterns, patternsize);
 
       case 'T':
-        return led(0, 0, 0, 0, 1, 1, 1, 1);
+        return led(0, 0, 0, 0, 1, 1, 1, 1, patterns, patternsize);
 
       case 'U':
-        return led(0, 0, 1, 1, 1, 1, 1, 0);
+        return led(0, 0, 1, 1, 1, 1, 1, 0, patterns, patternsize);
 
       case 'V':
-        return led(0, 0, 0, 1, 1, 1, 0, 0);
+        return led(0, 0, 0, 1, 1, 1, 0, 0, patterns, patternsize);
 
       case 'W':
-        return led(0, 0, 1, 0, 1, 0, 1, 0);
+               led(0, 0, 0, 1, 1, 1, 1, 0, patterns, patternsize);
+        return led(0, 0, 0, 0, 0, 1, 1, 0, patterns, patternsize);
 
       case 'X':
-        return led(0, 0, 1, 1, 0, 1, 1, 1);
+        return led(0, 0, 1, 1, 0, 1, 1, 1, patterns, patternsize);
 
       case 'Y':
-        return led(0, 0, 1, 1, 1, 0, 1, 1);
+        return led(0, 0, 1, 1, 1, 0, 1, 1, patterns, patternsize);
 
       case 'Z':
-        return led(0, 1, 1, 0, 1, 1, 0, 1);
+        return led(0, 1, 1, 0, 1, 1, 0, 1, patterns, patternsize);
 
         //lower case
       case 'a':
-        return led(0, 1, 1, 1, 0, 1, 1, 1);
+        return led(0, 1, 1, 1, 0, 1, 1, 1, patterns, patternsize);
 
       case 'b':
-        return led(0, 0, 0, 1, 1, 1, 1, 1);
+        return led(0, 0, 0, 1, 1, 1, 1, 1, patterns, patternsize);
 
       case 'c':
-        return led(0, 1, 0, 0, 1, 1, 1, 0);
+        return led(0, 1, 0, 0, 1, 1, 1, 0, patterns, patternsize);
 
       case 'd':
-        return led(0, 0, 1, 1, 1, 1, 0, 1);
+        return led(0, 0, 1, 1, 1, 1, 0, 1, patterns, patternsize);
 
       case 'e':
-        return led(0, 1, 0, 0, 1, 1, 1, 1);
+        return led(0, 1, 0, 0, 1, 1, 1, 1, patterns, patternsize);
 
       case 'f':
-        return led(0, 1, 0, 0, 0, 1, 1, 1);
+        return led(0, 1, 0, 0, 0, 1, 1, 1, patterns, patternsize);
 
       case 'g':
-        return led(0, 1, 1, 1, 1, 0, 1, 1);
+        return led(0, 1, 1, 1, 1, 0, 1, 1, patterns, patternsize);
 
       case 'h':
-        return led(0, 0, 1, 1, 0, 1, 1, 1);
+        return led(0, 0, 1, 1, 0, 1, 1, 1, patterns, patternsize);
 
       case 'i':
-        return led(0, 0, 0, 0, 0, 1, 1, 0);
+        return led(0, 0, 0, 0, 0, 1, 1, 0, patterns, patternsize);
 
       case 'j':
-        return led(0, 0, 1, 1, 1, 1, 0, 0);
+        return led(0, 0, 1, 1, 1, 1, 0, 0, patterns, patternsize);
 
       case 'k':
-        return led(0, 0, 1, 1, 0, 1, 1, 1);
+        return led(0, 0, 1, 1, 0, 1, 1, 1, patterns, patternsize);
 
       case 'l':
-        return led(0, 0, 0, 0, 1, 1, 1, 0);
+        return led(0, 0, 0, 0, 1, 1, 1, 0, patterns, patternsize);
 
       case 'm':
-        return led(0, 1, 0, 1, 0, 1, 0, 0);
+               led(0, 1, 1, 0, 0, 1, 1, 0, patterns, patternsize);
+        return led(0, 0, 0, 0, 0, 1, 1, 0, patterns, patternsize);
 
       case 'n':
-        return led(0, 0, 0, 1, 0, 1, 0, 1);
+        return led(0, 0, 0, 1, 0, 1, 0, 1, patterns, patternsize);
 
       case 'o':
-        return led(0, 1, 1, 1, 1, 1, 1, 0);
+        return led(0, 1, 1, 1, 1, 1, 1, 0, patterns, patternsize);
 
       case 'p':
-        return led(0, 1, 1, 0, 0, 1, 1, 1);
+        return led(0, 1, 1, 0, 0, 1, 1, 1, patterns, patternsize);
 
       case 'q':
-        return led(0, 1, 1, 1, 0, 0, 1, 1);
+        return led(0, 1, 1, 1, 0, 0, 1, 1, patterns, patternsize);
 
       case 'r':
-        return led(0, 0, 0, 0, 0, 1, 0, 1);
+        return led(0, 0, 0, 0, 0, 1, 0, 1, patterns, patternsize);
 
       case 's':
-        return led(0, 1, 0, 1, 1, 0, 1, 1);
+        return led(0, 1, 0, 1, 1, 0, 1, 1, patterns, patternsize);
 
       case 't':
-        return led(0, 0, 0, 0, 1, 1, 1, 1);
+        return led(0, 0, 0, 0, 1, 1, 1, 1, patterns, patternsize);
 
       case 'u':
-        return led(0, 0, 1, 1, 1, 1, 1, 0);
+        return led(0, 0, 1, 1, 1, 1, 1, 0, patterns, patternsize);
 
       case 'v':
-        return led(0, 0, 0, 1, 1, 1, 0, 0);
+        return led(0, 0, 0, 1, 1, 1, 0, 0, patterns, patternsize);
 
       case 'w':
-        return led(0, 0, 1, 0, 1, 0, 1, 0);
+               led(0, 0, 0, 1, 1, 1, 1, 0, patterns, patternsize);
+        return led(0, 0, 0, 0, 0, 1, 1, 0, patterns, patternsize);
 
       case 'x':
-        return led(0, 0, 1, 1, 0, 1, 1, 1);
+        return led(0, 0, 1, 1, 0, 1, 1, 1, patterns, patternsize);
 
       case 'y':
-        return led(0, 0, 1, 1, 1, 0, 1, 1);
+        return led(0, 0, 1, 1, 1, 0, 1, 1, patterns, patternsize);
 
       case 'z':
-        return led(0, 1, 1, 0, 1, 1, 0, 1);
+        return led(0, 1, 1, 0, 1, 1, 0, 1, patterns, patternsize);
 
         //numbers
       case '0':
-        return led(0, 1, 1, 1, 1, 1, 1, 0);
+        return led(0, 1, 1, 1, 1, 1, 1, 0, patterns, patternsize);
 
       case '1':
-        return led(0, 0, 1, 1, 0, 0, 0, 0);
+        return led(0, 0, 1, 1, 0, 0, 0, 0, patterns, patternsize);
 
       case '2':
-        return led(0, 1, 1, 0, 1, 1, 0, 1);
+        return led(0, 1, 1, 0, 1, 1, 0, 1, patterns, patternsize);
 
       case '3':
-        return led(0, 1, 1, 1, 1, 0, 0, 1);
+        return led(0, 1, 1, 1, 1, 0, 0, 1, patterns, patternsize);
 
       case '4':
-        return led(0, 0, 1, 1, 0, 0, 1, 1);
+        return led(0, 0, 1, 1, 0, 0, 1, 1, patterns, patternsize);
 
       case '5':
-        return led(0, 1, 0, 1, 1, 0, 1, 1);
+        return led(0, 1, 0, 1, 1, 0, 1, 1, patterns, patternsize);
 
       case '6':
-        return led(0, 1, 0, 1, 1, 1, 1, 1);
+        return led(0, 1, 0, 1, 1, 1, 1, 1, patterns, patternsize);
 
       case '7':
-        return led(0, 1, 1, 1, 0, 0, 0, 0);
+        return led(0, 1, 1, 1, 0, 0, 0, 0, patterns, patternsize);
 
       case '8':
-        return led(0, 1, 1, 1, 1, 1, 1, 1);
+        return led(0, 1, 1, 1, 1, 1, 1, 1, patterns, patternsize);
 
       case '9':
-        return led(0, 1, 1, 1, 1, 0, 1, 1);
+        return led(0, 1, 1, 1, 1, 0, 1, 1, patterns, patternsize);
 
         //symbols
       case '.':
-        return led(1, 0, 0, 0, 0, 0, 0, 0);
+        return led(1, 0, 0, 0, 0, 0, 0, 0, patterns, patternsize);
 
       case ' ':
-        return led(0, 0, 0, 0, 0, 0, 0, 0);
+        return led(0, 0, 0, 0, 0, 0, 0, 0, patterns, patternsize);
 
       case '-':
-        return led(0, 0, 0, 0, 0, 0, 0, 1);
+        return led(0, 0, 0, 0, 0, 0, 0, 1, patterns, patternsize);
 
       default:
-        return led(0, 0, 0, 0, 0, 0, 0, 0);
+        return led(0, 0, 0, 0, 0, 0, 0, 0, patterns, patternsize);
 
       }
   }
@@ -454,10 +459,11 @@ int main(int num, char *opts[])
     d("displaying string:");d(buf);
     // now translate the string into a series of bit patterns
     int sz = strlen(buf);
-    char *patterns = malloc(sz);
+    int patternsize = 0;
+    char *patterns = malloc(sz * 2); // worst case every character is double wide
     for (lp = 0; lp < sz; lp++)
       {
-        patterns[lp] = translate(buf[lp]);
+        translate(buf[lp], patterns, &patternsize);
       }
 
     d("before init");
