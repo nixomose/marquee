@@ -138,7 +138,7 @@ void *display_thread(void *opt)
           {
             displaypattern(7 - lp, display[lp]);
             latch();
-            delayMicroseconds(100); // 1000000 is one second
+            delayMicroseconds(2000); // 1000000 is one second
           }
       }
     return NULL;
@@ -153,6 +153,7 @@ char led(int p, int a, int b, int c, int d, int e, int f, int g)
     e = 1 - e;
     f = 1 - f;
     g = 1 - g;
+    p = 1 - p;
     char out = 0;
     out |= (a << 0);
     out |= (b << 1);
@@ -225,7 +226,7 @@ char translate(char c)
         return led(0, 1, 1, 1, 1, 1, 1, 0);
 
       case 'P':
-        return led(0, 1, 1, 1, 0, 0, 1, 1);
+        return led(0, 1, 1, 0, 0, 1, 1, 1);
 
       case 'Q':
         return led(0, 1, 1, 1, 0, 0, 1, 1);
@@ -304,7 +305,7 @@ char translate(char c)
         return led(0, 1, 1, 1, 1, 1, 1, 0);
 
       case 'p':
-        return led(0, 1, 1, 1, 0, 0, 1, 1);
+        return led(0, 1, 1, 0, 0, 1, 1, 1);
 
       case 'q':
         return led(0, 1, 1, 1, 0, 0, 1, 1);
@@ -374,8 +375,11 @@ char translate(char c)
       case ' ':
         return led(0, 0, 0, 0, 0, 0, 0, 0);
 
+      case '-':
+        return led(0, 0, 0, 0, 0, 0, 0, 1);
+
       default:
-        return led(0, 1, 1, 1, 1, 1, 1, 1);
+        return led(0, 0, 0, 0, 0, 0, 0, 0);
 
       }
   }
@@ -401,14 +405,14 @@ void update_marquee(char *orig, char *patterns, int sz)
             display[lp] = pic;
             dbuf[lp] = orig[readpos];
           }
-        printf ("%s\n", dbuf);
+//        printf ("%s\n", dbuf);
 
         startpos++;
         if (startpos >= sz)
           startpos = 0;
 
         d("before sleep");
-        sleep(1); // don't need to update it that often...
+        usleep(200000); // don't need to update it that often...
         d("after sleep");
       }
   }
