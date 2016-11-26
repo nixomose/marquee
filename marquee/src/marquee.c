@@ -219,7 +219,7 @@ void translate(char c, char *patterns, int *patternsize)
 
       case 'M':
                led(0, 1, 1, 0, 0, 1, 1, 0, patterns, patternsize);
-        return led(0, 0, 0, 0, 0, 1, 1, 0, patterns, patternsize);
+        return led(0, 1, 1, 1, 0, 0, 0, 0, patterns, patternsize);
 
       case 'N':
         return led(0, 0, 0, 1, 0, 1, 0, 1, patterns, patternsize);
@@ -250,7 +250,7 @@ void translate(char c, char *patterns, int *patternsize)
 
       case 'W':
                led(0, 0, 0, 1, 1, 1, 1, 0, patterns, patternsize);
-        return led(0, 0, 0, 0, 0, 1, 1, 0, patterns, patternsize);
+        return led(0, 0, 1, 1, 1, 0, 0, 0, patterns, patternsize);
 
       case 'X':
         return led(0, 0, 1, 1, 0, 1, 1, 1, patterns, patternsize);
@@ -300,7 +300,7 @@ void translate(char c, char *patterns, int *patternsize)
 
       case 'm':
                led(0, 1, 1, 0, 0, 1, 1, 0, patterns, patternsize);
-        return led(0, 0, 0, 0, 0, 1, 1, 0, patterns, patternsize);
+        return led(0, 1, 1, 1, 0, 0, 0, 0, patterns, patternsize);
 
       case 'n':
         return led(0, 0, 0, 1, 0, 1, 0, 1, patterns, patternsize);
@@ -331,7 +331,7 @@ void translate(char c, char *patterns, int *patternsize)
 
       case 'w':
                led(0, 0, 0, 1, 1, 1, 1, 0, patterns, patternsize);
-        return led(0, 0, 0, 0, 0, 1, 1, 0, patterns, patternsize);
+        return led(0, 0, 1, 1, 1, 0, 0, 0, patterns, patternsize);
 
       case 'x':
         return led(0, 0, 1, 1, 0, 1, 1, 1, patterns, patternsize);
