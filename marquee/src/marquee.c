@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 #include <pthread.h>
 #include <time.h>
 #include <string.h>
@@ -75,6 +76,12 @@ typedef int boolean;
 // this is the data that gets displayed by the display thread
 int display[8];
 int startpos; // this is the position of the character that goes in the leftmost display position
+
+int filemode = 0;
+char *filename = NULL;
+char *sourcebuf = NULL;
+char *patternbuf = NULL;
+
 
 void latch()
   {
@@ -389,17 +396,66 @@ void translate(char c, char *patterns, int *patternsize)
       }
   }
 
+void makestring(char *input, char **patterns, int *szout)
+  {
+    if (sourcebuf != NULL)
+      free(sourcebuf);
+    sourcebuf = NULL;
+    if (patternbuf != NULL)
+      free(patternbuf);
+    patternbuf = NULL;
+    int sz = strlen(input);
+    patternbuf = malloc(sz * 2); // worst case every character is double wide
+    sourcebuf = malloc(sz + 1);
+    strcpy (sourcebuf, input);
+
+    int patternsize = 0;
+    int lp;
+    for (lp = 0; lp < sz; lp++)
+      {
+        translate(input[lp], patternbuf, &patternsize);
+      }
+    *patterns = patternbuf;
+    *szout = patternsize;
+  }
+
+void readfromfile(char **patterns, int *szout)
+  {
+    char buf[4096];
+    FILE *f = fopen(filename, "r");
+    if (f == NULL)
+      {
+        sprintf(buf, "Unable to open file %s, err: %d", filename, errno);
+        return makestring(buf, patterns, szout);
+      }
+    memset(buf, 0, 4096);
+    int ret = fread(buf, 1, 4096, f);
+    if (ret == 0)
+      {
+        fclose(f);
+        sprintf(buf, "Unable to read file %s, err: %d", filename, errno);
+        return makestring(buf, patterns, szout);
+      }
+    makestring(buf, patterns, szout);
+    fclose (f);
+  }
+
 void update_marquee(char *orig, char *patterns, int sz)
   {
     /* take the bit patterns and display the first 8,
      * then wait a bit and print the next 8 starting at position 2
      * taking care to deal with 8 char strings, and wrapping around. */
 
-    char dbuf[9];
-    dbuf[8] = '\0';
+//    char dbuf[9];
+//    dbuf[8] = '\0';
     while (true)
       {
         d("start update marquee loop");
+        if (filemode)
+          {
+            if (startpos == 0) // reread from file
+              readfromfile(&patterns, &sz);
+          }
         int lp;
         for (lp = 0; lp < 8; lp++)
           {
@@ -408,7 +464,7 @@ void update_marquee(char *orig, char *patterns, int sz)
               readpos -= sz;
             char pic = patterns[readpos];
             display[lp] = pic;
-            dbuf[lp] = orig[readpos];
+//            dbuf[lp] = orig[readpos];
           }
 //        printf ("%s\n", dbuf);
 
@@ -424,57 +480,80 @@ void update_marquee(char *orig, char *patterns, int sz)
 
 int main(int num, char *opts[])
   {
-
     // get the string to print
     if (num < 2)
       {
         printf("marquee <string>\n");
+        printf("marquee -f <file>\n");
         printf("pass the string to print as a parameter.\n");
+        printf("or pass the filename to read the string from.\n");
         return 1;
-      }
-    /* take all params and make one long string out of it. */
-    int lp;
-    char *buf = malloc(1);
-    *buf = '\0';
-    for (lp = 1; lp < num; lp++)
-      {
-        int newlen = strlen(buf) + strlen(opts[lp]) + 2; // space + nt
-        buf = realloc(buf, newlen);
-        if (lp > 1)
-          strcat(buf, " ");
-        strcat(buf, opts[lp]);
-      }
-
-    if (strlen(buf) < 8) // must be at least 8 chars to marquee
-      { // pad out with spaces.
-        buf = realloc(buf, strlen(buf) + 10);
-        while (strlen(buf) < 10)
-          strcat(buf, " ");
-      }
-
-    // add the end of string delim "---"
-    buf = realloc(buf, strlen(buf) + 6);
-    strcat(buf, " --- ");
-
-    d("displaying string:");d(buf);
-    // now translate the string into a series of bit patterns
-    int sz = strlen(buf);
-    int patternsize = 0;
-    char *patterns = malloc(sz * 2); // worst case every character is double wide
-    for (lp = 0; lp < sz; lp++)
-      {
-        translate(buf[lp], patterns, &patternsize);
       }
 
     d("before init");
 #ifndef onio
     init();
 #endif
-    d("after init");d("start thread");
+    d("after init");
+
+    startpos = 0;
+    char *buf = malloc(1);
+    *buf = '\0';
+    char *patterns = NULL;
+    int patternsize = 0;
+
+    if (strcmp(opts[1], "-f") == 0)
+      {
+        filemode = 1;
+        if (num < 3)
+          {
+            printf("You must pass the filename to read the string from.\n");
+            return 1;
+          }
+        filename = opts[2];
+      }
+    else
+      {
+        /* take all params and make one long string out of it. */
+        int lp;
+
+        for (lp = 1; lp < num; lp++)
+          {
+            int newlen = strlen(buf) + strlen(opts[lp]) + 2; // space + nt
+            buf = realloc(buf, newlen);
+            if (lp > 1)
+              strcat(buf, " ");
+            strcat(buf, opts[lp]);
+          }
+
+        if (strlen(buf) < 8) // must be at least 8 chars to marquee
+          { // pad out with spaces.
+            buf = realloc(buf, strlen(buf) + 10);
+            while (strlen(buf) < 10)
+              strcat(buf, " ");
+          }
+
+        // add the end of string delim "---"
+        buf = realloc(buf, strlen(buf) + 6);
+        strcat(buf, " --- ");
+
+        d("displaying string:");d(buf);
+        // now translate the string into a series of bit patterns
+        int sz = strlen(buf);
+        patternsize = 0;
+        patterns = malloc(sz * 2); // worst case every character is double wide
+        for (lp = 0; lp < sz; lp++)
+          {
+            translate(buf[lp], patterns, &patternsize);
+          }
+      } // if reading string from command line
+
+    d("start thread");
     pthread_t t1;
     pthread_create(&t1, NULL, (void *) &display_thread, NULL);
+
     d("update marquee");
-    update_marquee(buf, patterns, sz);
+    update_marquee(buf, patterns, patternsize);
     // never gets here
     pthread_join(t1, NULL);
 
