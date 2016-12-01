@@ -291,7 +291,7 @@ void translate(char c, char *patterns, int *patternsize)
         return led(0, 1, 1, 1, 1, 0, 1, 1, patterns, patternsize);
 
       case 'h':
-        return led(0, 0, 1, 1, 0, 1, 1, 1, patterns, patternsize);
+        return led(0, 0, 0, 1, 0, 1, 1, 1, patterns, patternsize);
 
       case 'i':
         return led(0, 0, 0, 0, 0, 1, 1, 0, patterns, patternsize);
