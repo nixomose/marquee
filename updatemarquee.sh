@@ -1,6 +1,11 @@
 #!/bin/bash
 
-scp marquee/src/marquee.c root@192.168.123.30:
+IP="192.168.123.30"
 
-ssh root@192.168.123.30 "gcc marquee.c -lwiringPi -lpthread -o marquee " 
+scp marquee/src/marquee.c root@$IP:
+
+ssh root@$IP "gcc marquee.c -lwiringPi -lpthread -o marquee " 
+
+scp getweather.sh root@$IP:
+scp setmarquee.sh root@$IP:
 
