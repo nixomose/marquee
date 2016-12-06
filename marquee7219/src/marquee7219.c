@@ -20,26 +20,6 @@
 #define e(x,y) // printf(x "%d\n", y)
 
 #define b10000000 0x80
-#define b01000000 0x40
-#define b00100000 0x20
-#define b00010000 0x10
-#define b00001000 0x08
-#define b00000100 0x04
-#define b00000010 0x02
-#define b00000001 0x01
-
-#define b11000000 192
-#define b11111001 249
-#define b10100100 164
-#define b10110000 176
-#define b10011001 153
-#define b10010010 146
-#define b10000010 130
-#define b11111000 248
-//#define b10000000 128
-#define b10010000 144
-#define b01111111 127
-#define b11111111 255
 
 
 /* PGFEDCBA  p is the dot
@@ -58,8 +38,10 @@
  * wiringpi pin 4  is gpio 23 which is raspberry pi pin 16
  * wiringpi pin 16 is gpio 15 which is raspberry pi pin 10
  * wiringpi pin 15 is gpio 14 which is raspberry pi pin 8
- *
  */
+
+int max_digits = 16; // how many total characters are we supplying data for across all daisy chained displays.
+
 
 int HC_LATCH = 4; // RCK of 8x7segment module pin 16
 
@@ -93,13 +75,13 @@ typedef int boolean;
 #define false 0
 #define true (!false)
 
-#define BLANKDIGIT 11
+#define BLANKDIGIT 0
 
 #define NOSPACES 1
 #define SPACES 2
 
 // this is the data buffer that gets displayed
-char display[8];
+char *display = NULL;
 int startpos; // this is the position of the character that goes in the leftmost display position
 
 int filemode = 0;
@@ -108,7 +90,9 @@ char *sourcebuf = NULL;
 char *patternbuf = NULL;
 
 
+void reset(void);
 void displaypattern(char position, char value);
+void latch(void);
 
 
 void init(void)
@@ -117,24 +101,35 @@ void init(void)
     pinMode(MAX_LOAD, OUTPUT);
     pinMode(MAX_CLOCK, OUTPUT);
     pinMode(MAX_DATA, OUTPUT);
+    display = malloc(max_digits);
     int lp;
-    for (lp = 0; lp < 8; lp++)
+    for (lp = 0; lp < max_digits; lp++)
       display[lp] = BLANKDIGIT;
 
-    displaypattern(SCAN_LIMIT, 7);     // set up to scan all eight digits
+    startpos = 0;
+    reset();
+  }
 
+void reset(void)
+  {
     /* BCD decode mode off : data bits correspond to the segments (A-G and DP) of the seven segment display.
        BCD mode on :  0 to 15 =  0 to 9, -, E, H, L, P, and ' '     */
 
-
-    displaypattern(DECODE_MODE, 0);   // Set BCD decode mode off
-    displaypattern(DECODE_MODE, 0);   // Set BCD decode mode off
-    displaypattern(DISPLAY_TEST, 0);  // Disable test mode
-    displaypattern(INTENSITY, 1);     // set brightness 0 to 15
-    displaypattern(SHUTDOWN, 1);      // come out of shutdown mode / turn on the digits
     displaypattern(SCAN_LIMIT, 7);    // set up to scan all eight digits
-
-    startpos = 0;
+    displaypattern(SCAN_LIMIT, 7);    // set up to scan all eight digits
+    latch();
+    displaypattern(DECODE_MODE, 0);   // Set BCD decode mode off
+    displaypattern(DECODE_MODE, 0);   // Set BCD decode mode off
+    latch();
+    displaypattern(DISPLAY_TEST, 0);  // Disable test mode
+    displaypattern(DISPLAY_TEST, 0);  // Disable test mode
+    latch();
+    displaypattern(INTENSITY, 1);     // set brightness 0 to 15
+    displaypattern(INTENSITY, 1);     // set brightness 0 to 15
+    latch();
+    displaypattern(SHUTDOWN, 1);      // come out of shutdown mode / turn on the digits
+    displaypattern(SHUTDOWN, 1);      // come out of shutdown mode / turn on the digits
+    latch();
   }
 
 void shift(boolean val)
@@ -155,6 +150,14 @@ void writebits(char val)
       shift(((val << i) & b10000000) != 0);
   }
 
+
+void latch(void)
+  {
+    digitalWrite(MAX_LOAD, LOW);  // LOAD 0 to latch
+    digitalWrite(MAX_LOAD, HIGH);  // set LOAD 1 to finish
+  }
+
+
 void displaypattern(char control, char value)
   {
     e("control", control);
@@ -165,19 +168,19 @@ void displaypattern(char control, char value)
     writebits(control);
     writebits(value);
 
-    digitalWrite(MAX_LOAD, LOW);  // LOAD 0 to latch
-    digitalWrite(MAX_LOAD, HIGH);  // set LOAD 1 to finish
   }
 
 void refresh_display()
   {
-    int startdigit = 0;
     int lp;
     d("loop");
 
-    for (lp = startdigit; lp < 8; lp++)
+    int spos = 8;
+    for (lp = 0; lp < (max_digits/2); lp++)
       {
+        displaypattern(8 - lp, display[lp+8]);
         displaypattern(8 - lp, display[lp]);
+        latch();
       }
     return;
   }
@@ -469,8 +472,6 @@ void update_marquee(char *orig, char *patterns, int sz)
      * then wait a bit and print the next 8 starting at position 2
      * taking care to deal with 8 char strings, and wrapping around. */
 
-//    char dbuf[9];
-//    dbuf[8] = '\0';
     while (true)
       {
         d("start update marquee loop");
@@ -480,16 +481,14 @@ void update_marquee(char *orig, char *patterns, int sz)
               readfromfile(&patterns, &sz);
           }
         int lp;
-        for (lp = 0; lp < 8; lp++)
+        for (lp = 0; lp < max_digits; lp++)
           {
             int readpos = startpos + lp;
             if (readpos >= sz)
               readpos -= sz;
             char pic = patterns[readpos];
             display[lp] = pic;
-//            dbuf[lp] = orig[readpos];
           }
-//        printf ("%s\n", dbuf);
 
         startpos++;
         if (startpos >= sz)
@@ -502,6 +501,8 @@ void update_marquee(char *orig, char *patterns, int sz)
         d("before sleep");
         usleep(400000); // don't need to update it that often...
         d("after sleep");
+        if (startpos == 0)
+          reset(); // keep it from shutting down?
       }
   }
 
