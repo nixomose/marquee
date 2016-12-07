@@ -52,8 +52,7 @@ int max_displays = 2; // how many 8 digit displays you have chained together.
  * display one is char #8. The 16th char in the string is char #8 also but in display two.
  * So the easiest thing to do is get your 16/24/whatever string of characters together
  * then write out #17, #9 #1, latch, because they are all position 1,
- * then write out #18, #10, #2, latch, and they are all position 2. and so on.
- */
+ * then write out #18, #10, #2, latch, and they are all position 2. and so on. */
 
 
 int HC_LATCH = 4; // RCK of 8x7segment module pin 16
@@ -118,6 +117,9 @@ void init(void)
     int lp;
     for (lp = 0; lp < max_displays * 8; lp++)
       display[lp] = BLANKDIGIT;
+
+    // set off setting load high, because we have to lower it and raise it to push a 16-bit command data structure
+    digitalWrite(MAX_LOAD, HIGH);  // set LOAD 1 to start
 
     startpos = 0;
     reset();
@@ -189,7 +191,7 @@ void refresh_display()
         for (rp = 0; rp < max_displays; rp++)
           {
             // loop through all the displays
-            int invert = max_displays - rp; // we have to go from farthest display out towards the front because the first thing we send goes to the last display.
+            int invert = max_displays - (rp + 1); // we have to go from farthest display out towards the front because the first thing we send goes to the last display.
             int charpos = lp + (8 * invert);
             displaypattern(8 - lp, display[charpos]);
           }
