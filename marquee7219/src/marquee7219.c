@@ -40,7 +40,20 @@
  * wiringpi pin 15 is gpio 14 which is raspberry pi pin 8
  */
 
-int max_digits = 16; // how many total characters are we supplying data for across all daisy chained displays.
+int max_displays = 2; // how many 8 digit displays you have chained together.
+
+/* So it turns out when daisy chaining displays together, the trick is just like it says, of course it makes
+ * more sense after you understand it...
+ * You write out a 16 bit data block for the first display, and if you have another display, you write out
+ * another 16 bits, which will push the first 16 bits to the second display, THEN you latch.
+ * So if you have three displays, you write out 3 sets of 16 bits, the first command sent goes to the last
+ * display in the chain.
+ * The other interesting point is that you address each display individually, so the 8th character in
+ * display one is char #8. The 16th char in the string is char #8 also but in display two.
+ * So the easiest thing to do is get your 16/24/whatever string of characters together
+ * then write out #17, #9 #1, latch, because they are all position 1,
+ * then write out #18, #10, #2, latch, and they are all position 2. and so on.
+ */
 
 
 int HC_LATCH = 4; // RCK of 8x7segment module pin 16
@@ -101,13 +114,21 @@ void init(void)
     pinMode(MAX_LOAD, OUTPUT);
     pinMode(MAX_CLOCK, OUTPUT);
     pinMode(MAX_DATA, OUTPUT);
-    display = malloc(max_digits);
+    display = malloc(max_displays * 8);
     int lp;
-    for (lp = 0; lp < max_digits; lp++)
+    for (lp = 0; lp < max_displays * 8; lp++)
       display[lp] = BLANKDIGIT;
 
     startpos = 0;
     reset();
+  }
+
+void repeat_send(char cmd, char data, int repeat)
+  {
+    int lp;
+    for (lp = 0; lp < repeat; lp++)
+      displaypattern(cmd, data);
+    latch();
   }
 
 void reset(void)
@@ -115,21 +136,11 @@ void reset(void)
     /* BCD decode mode off : data bits correspond to the segments (A-G and DP) of the seven segment display.
        BCD mode on :  0 to 15 =  0 to 9, -, E, H, L, P, and ' '     */
 
-    displaypattern(SCAN_LIMIT, 7);    // set up to scan all eight digits
-    displaypattern(SCAN_LIMIT, 7);    // set up to scan all eight digits
-    latch();
-    displaypattern(DECODE_MODE, 0);   // Set BCD decode mode off
-    displaypattern(DECODE_MODE, 0);   // Set BCD decode mode off
-    latch();
-    displaypattern(DISPLAY_TEST, 0);  // Disable test mode
-    displaypattern(DISPLAY_TEST, 0);  // Disable test mode
-    latch();
-    displaypattern(INTENSITY, 1);     // set brightness 0 to 15
-    displaypattern(INTENSITY, 1);     // set brightness 0 to 15
-    latch();
-    displaypattern(SHUTDOWN, 1);      // come out of shutdown mode / turn on the digits
-    displaypattern(SHUTDOWN, 1);      // come out of shutdown mode / turn on the digits
-    latch();
+    repeat_send(SCAN_LIMIT, 7, max_displays);    // set up to scan all eight digits
+    repeat_send(DECODE_MODE, 0, max_displays);   // Set BCD decode mode off
+    repeat_send(DISPLAY_TEST, 0, max_displays);  // Disable test mode
+    repeat_send(INTENSITY, 1, max_displays);     // set brightness 0 to 15
+    repeat_send(SHUTDOWN, 1, max_displays);      // come out of shutdown mode / turn on the digits
   }
 
 void shift(boolean val)
@@ -163,11 +174,8 @@ void displaypattern(char control, char value)
     e("control", control);
     /* the max7219 takes 16 bits of information:
      * the first 8 bits is the register number, the second 8 bits is the data out. */
-    digitalWrite(MAX_LOAD, HIGH);  // set LOAD 1 to start
-
     writebits(control);
     writebits(value);
-
   }
 
 void refresh_display()
@@ -175,11 +183,16 @@ void refresh_display()
     int lp;
     d("loop");
 
-    int spos = 8;
-    for (lp = 0; lp < (max_digits/2); lp++)
+    for (lp = 0; lp < 8; lp++) // always write 8 digits
       {
-        displaypattern(8 - lp, display[lp+8]);
-        displaypattern(8 - lp, display[lp]);
+        int rp;
+        for (rp = 0; rp < max_displays; rp++)
+          {
+            // loop through all the displays
+            int invert = max_displays - rp; // we have to go from farthest display out towards the front because the first thing we send goes to the last display.
+            int charpos = lp + (8 * invert);
+            displaypattern(8 - lp, display[charpos]);
+          }
         latch();
       }
     return;
@@ -481,7 +494,7 @@ void update_marquee(char *orig, char *patterns, int sz)
               readfromfile(&patterns, &sz);
           }
         int lp;
-        for (lp = 0; lp < max_digits; lp++)
+        for (lp = 0; lp < (8 * max_displays); lp++)
           {
             int readpos = startpos + lp;
             if (readpos >= sz)
