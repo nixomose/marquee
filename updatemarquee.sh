@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IP="192.168.123.30"
+IP="192.168.123.220"
 
 scp marquee/src/marquee.c root@$IP:
 
